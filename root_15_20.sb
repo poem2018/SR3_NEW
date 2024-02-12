@@ -1,0 +1,13 @@
+#!/bin/bash
+#SBATCH --job-name='2x'
+#SBATCH --output='outfile/2x.%j.%N.out'
+#SBATCH --error='outfile/2x.%j.%N.err'
+#SBATCH --partition=gpux1
+#SBATCH --time=2
+
+module load wmlce/1.7.0-py3.7
+#!/bin/bash
+conda init bash
+conda activate hal2
+python sr.py -p train -c config/zssr_16_128.json
+

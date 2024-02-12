@@ -1,0 +1,123 @@
+{
+    "name": "val_finetune_2x_zssr_celeba_withoutcontrast_256_512",
+    "phase": "train", // train or val   need to change this!!!!!!!
+    "is_control": "False",
+    "gpu_ids": [
+        0
+    ],
+    "path": { //set the path
+        "log": "logs",
+        "tb_logger": "tb_logger",
+        "results": "eval_results",
+        "checkpoint": "checkpoint",
+        // "resume_state": null   // need to switch this when change the val training mode
+        // "resume_state": "experiments/2x_train/I390000_E62" //pretrain model or training state
+        //"resume_state": "./experiments/2x_train/I360000_E57"
+	"resume_state": "./finetune_model/I360000_E57"
+    },
+    "datasets": {
+        "train": {
+            "name": "Celeba",
+            "mode": "HR", // whether need LR img
+            "dataroot": "./dataset/finetune_2x", //"dataset/Celeba_2x_512_1024_256",//  "dataset/celebahq_16_128", //
+            "datatype": "img", //lmdb or img, path of img files
+            "l_resolution": 512, // low resolution need to super_resolution
+            "r_resolution": 1024, // high resolution
+            "batch_size": 4,
+            "num_workers": 8,
+            "use_shuffle": true,
+            "data_len": -1 // -1 represents all data used in train
+        },
+        "val": {
+            "name": "Celeba",
+            "mode": "LRHR",
+            "dataroot": "./dataset/test_Celeba_2x", //"dataset/celebahq_16_128", // _Celeba
+            "datatype": "img", //lmdb or img, path of img files
+            "l_resolution": 512,
+            "r_resolution": 1024,
+            "data_len": 50 // data length in validation 
+        } //,
+        //modified add new one TODO
+        // "downsampling":{
+        //     "resize_prob": [0, 1.0, 0],//[0.2, 0.7, 0.1],  //up, down, keep
+        //     "resize_range": [0.15,0.151], //[0.15, 1.5],
+        //     "gaussian_noise_prob": 0.5,
+        //     "noise_range": [15,16], //[1, 30],
+        //     "poisson_scale_range": [0.05, 0.051], //[0.05, 3],
+        //     "gray_noise_prob": 0.4,
+        //     "jpeg_range": [30,31], //[30, 95],
+
+        //     // the second degradation process
+        //     "second_blur_prob": 0.8,
+        //     "resize_prob2": [0, 1.0, 0],// [0.3, 0.4, 0.3],  // up, down, keep
+        //     "resize_range2": [0.3,0.31],//[0.3, 1.2],
+        //     "gaussian_noise_prob2": 0.5,
+        //     "noise_range2": [10,11],//[1, 25],
+        //     "poisson_scale_range2": [0.05,0.051],//[0.05, 2.5],
+        //     "gray_noise_prob2": 0.4,
+        //     "jpeg_range2": [30,31],//[30, 95],
+
+        //     "gt_size": 256,
+        //     "queue_size": 180,
+        //     "scale": 4
+        //     }
+    },
+    "model": {
+        "which_model_G": "sr3", // use the ddpm or sr3 network structure
+        "finetune_norm": false,
+        "unet": {
+            "in_channel": 6,
+            "out_channel": 3,
+            "inner_channel": 64,
+            "channel_multiplier": [
+                1,
+                2,
+                4,
+                8,
+                8
+            ],
+            "attn_res": [
+                16
+            ],
+            "res_blocks": 2,
+            "dropout": 0.2
+        },
+        "beta_schedule": { // use munual beta_schedule for acceleration
+            "train": {
+                "schedule": "linear",
+                "n_timestep": 2000,
+                "linear_start": 1e-6,
+                "linear_end": 1e-2
+            },
+            "val": {
+                "schedule": "linear",
+                "n_timestep": 2000,
+                "linear_start": 1e-6,
+                "linear_end": 1e-2
+            }
+        },
+        "diffusion": {
+            "image_size": 128,
+            "channels": 3, //sample channel
+            "conditional": true // unconditional generation or unconditional generation(super_resolution)
+        }
+    },
+    "train": {
+        "n_iter":  1000000,
+        "val_freq": 25,
+        "save_checkpoint_freq": 25,
+        "print_freq": 25,
+        "optimizer": {
+            "type": "adam",
+            "lr": 1e-4
+        },
+        "ema_scheduler": { // not used now
+            "step_start_ema": 5000,
+            "update_ema_every": 1,
+            "ema_decay": 0.9999
+        }
+    },
+    "wandb": {
+        "project": "sr_ffhq"
+    }
+}
